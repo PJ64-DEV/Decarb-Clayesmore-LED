@@ -304,65 +304,49 @@ st.divider()
 # === VISUAL ANALYSIS ===
 st.header("Visual Analysis")
 
-# REDESIGNED Gauge Charts using the multi-layer Donut method
-st.subheader("Visual Comparison: Current vs. Estimated")
+# REDESIGNED Impact Cards
+st.subheader("Visual Comparison of Annual Savings")
 g1, g2, g3 = st.columns(3)
 
-def create_multi_layer_gauge(new_val, current_val, explainer_text, title_text, prefix="", suffix="", max_range=None):
-    if max_range is None:
-        max_range = current_val * 1.1 if current_val > 0 else 1
-    
-    fig = go.Figure()
+def create_impact_card(savings, new_val, current_val, explainer_text, title_text, prefix="", suffix=""):
+    with st.container():
+        st.markdown(f"<h5>{title_text}</h5>", unsafe_allow_html=True)
+        st.metric(label=explainer_text, value=f"{prefix}{savings:,.2f}{suffix}")
+        
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            y=[''],
+            x=[current_val],
+            orientation='h',
+            marker=dict(color='rgba(214, 214, 214, 0.5)'), # Light gray for total bar
+            hoverinfo='none'
+        ))
+        fig.add_trace(go.Bar(
+            y=[''],
+            x=[new_val],
+            orientation='h',
+            marker=dict(color='#2ca02c'), # Green for new value
+            hoverinfo='none'
+        ))
+        fig.update_layout(
+            barmode='overlay',
+            showlegend=False,
+            height=100,
+            xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+            yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+            margin=dict(l=0, r=0, t=0, b=0),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
-    # Layer 1: White background with visible ticks
-    fig.add_trace(go.Pie(
-        values=[max_range / 2, max_range / 2],
-        marker_colors=['white', 'rgba(0,0,0,0)'],
-        hole=0.5, sort=False, direction='clockwise', rotation=180, showlegend=False,
-        hoverinfo='none', textinfo='none'
-    ))
-
-    # Layer 2: Red bar for current value
-    fig.add_trace(go.Pie(
-        values=[current_val, max_range - current_val, max_range],
-        marker_colors=['rgba(214, 39, 40, 0.8)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)'],
-        hole=0.6, sort=False, direction='clockwise', rotation=90, showlegend=False,
-        hoverinfo='none', textinfo='none'
-    ))
-    
-    # Layer 3: Green bar for new value
-    fig.add_trace(go.Pie(
-        values=[new_val, max_range - new_val, max_range],
-        marker_colors=['#2ca02c', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)'],
-        hole=0.7, sort=False, direction='clockwise', rotation=90, showlegend=False,
-        hoverinfo='none', textinfo='none'
-    ))
-
-    # Add annotations for the text, placed below the gauge arc
-    savings = current_val - new_val
-    fig.add_annotation(
-        text=explainer_text,
-        x=0.5, y=0.45, font_size=20, showarrow=False,
-        font={'color': 'gray'}
-    )
-    fig.add_annotation(
-        text=f"<b>{prefix}{savings:,.2f}{suffix}</b>",
-        x=0.5, y=0.25, font_size=32, showarrow=False
-    )
-    
-    fig.update_layout(
-        height=300, 
-        margin=dict(l=30, r=30, t=50, b=30),
-        title={'text': f"<b>{title_text}</b>", 'x': 0.5, 'y': 0.95}
-    )
-    return fig
 
 with g1:
-    st.plotly_chart(create_multi_layer_gauge(led_kwh, current_kwh, "Energy Savings", "Consumption (kWh)", suffix=" kWh", max_range=200000), use_container_width=True)
+    create_impact_card(estimated_savings_kwh, led_kwh, current_kwh, "Annual Energy Savings", "Consumption (kWh)", suffix=" kWh")
 with g2:
-    st.plotly_chart(create_multi_layer_gauge(led_cost, current_cost, "Cost Savings", "Expenditure (£)", "£", max_range=60000), use_container_width=True)
+    create_impact_card(estimated_savings_cost, led_cost, current_cost, "Annual Cost Savings", "Expenditure (£)", "£")
 with g3:
-    st.plotly_chart(create_multi_layer_gauge(led_co2, current_co2, "Emissions Reduction", "Emissions (T CO₂e)", suffix=" T CO₂e", max_range=50), use_container_width=True)
+    create_impact_card(estimated_savings_co2, led_co2, current_co2, "Annual Emissions Reduction", "Emissions (T CO₂e)", suffix=" T CO₂e")
 
 
 st.subheader("Savings Contribution by Area")
